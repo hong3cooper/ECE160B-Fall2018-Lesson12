@@ -1,0 +1,1302 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>ECE160 - Lesson 11 - Inheritance, Composition, Debugging & Testing</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h1>ECE160 - Lesson 11</h1>
+					<h3>Inheritance, Composition, Debugging & Testing</h3>
+					<p>
+						<small>Professor Hong</small>
+					</p>
+					
+				</section>
+						
+				<section>
+					<section data-markdown>
+						<textarea data-template>
+						## Review & Questions
+						</textarea>
+					</section>
+				</section>
+				
+				<section>
+					<section data-markdown>
+						<textarea data-template>
+						## Quiz #5  
+						* 50 minutes
+						</textarea>
+					</section>
+				</section>
+				
+				
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## Operator Overloading
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## How to Overload an Operator
+							* <code>operator@</code> where @ is the operator being overloaded   
+							
+							```
+//: C12:OperatorOverloadingSyntax.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+#include <iostream>
+using namespace std;
+
+class Integer {
+public:
+  int i;
+  Integer(int ii) : i(ii) {}
+  const Integer
+  operator+(const Integer& rv) const {
+    cout << "operator+" << endl;
+    return Integer(i + rv.i);
+  }
+  Integer&
+  operator+=(const Integer& rv) {
+    cout << "operator+=" << endl;
+    i += rv.i;
+    return *this;
+  }
+};
+
+int main() {
+  cout << "built-in types:" << endl;
+  int i = 1, j = 2, k = 3;
+  k += i + j;
+  cout << "k = " << k << endl;
+  cout << "user-defined types:" << endl;
+  Integer ii(1), jj(2), kk(3);
+  kk += ii + jj;
+  cout << "kk = " << kk.i << endl;
+} ///:~
+							```
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## Overloading Unary Operators
+							```
+//: C12:OverloadingUnaryOperators.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+#include <iostream>
+using namespace std;
+
+// Non-member functions:
+class Integer {
+  long i;
+  Integer* This() { return this; }
+public:
+  Integer(long ll = 0) : i(ll) {}
+  // No side effects takes const& argument:
+  friend const Integer&
+    operator+(const Integer& a);
+  friend const Integer
+    operator-(const Integer& a);
+  friend const Integer
+    operator~(const Integer& a);
+  friend Integer*
+    operator&(Integer& a);
+  friend int
+    operator!(const Integer& a);
+  // Side effects have non-const& argument:
+  // Prefix:
+  friend const Integer&
+    operator++(Integer& a);
+  // Postfix:
+  friend const Integer
+    operator++(Integer& a, int);
+  // Prefix:
+  friend const Integer&
+    operator--(Integer& a);
+  // Postfix:
+  friend const Integer
+    operator--(Integer& a, int);
+};
+
+// Global operators:
+const Integer& operator+(const Integer& a) {
+  cout << "+Integer\n";
+  return a; // Unary + has no effect
+}
+const Integer operator-(const Integer& a) {
+  cout << "-Integer\n";
+  return Integer(-a.i);
+}
+const Integer operator~(const Integer& a) {
+  cout << "~Integer\n";
+  return Integer(~a.i);
+}
+Integer* operator&(Integer& a) {
+  cout << "&Integer\n";
+  return a.This(); // &a is recursive!
+}
+int operator!(const Integer& a) {
+  cout << "!Integer\n";
+  return !a.i;
+}
+// Prefix; return incremented value
+const Integer& operator++(Integer& a) {
+  cout << "++Integer\n";
+  a.i++;
+  return a;
+}
+// Postfix; return the value before increment:
+const Integer operator++(Integer& a, int) {
+  cout << "Integer++\n";
+  Integer before(a.i);
+  a.i++;
+  return before;
+}
+// Prefix; return decremented value
+const Integer& operator--(Integer& a) {
+  cout << "--Integer\n";
+  a.i--;
+  return a;
+}
+// Postfix; return the value before decrement:
+const Integer operator--(Integer& a, int) {
+  cout << "Integer--\n";
+  Integer before(a.i);
+  a.i--;
+  return before;
+}
+
+// Show that the overloaded operators work:
+void f(Integer a) {
+  +a;
+  -a;
+  ~a;
+  Integer* ip = &a;
+  !a;
+  ++a;
+  a++;
+  --a;
+  a--;
+}
+
+// Member functions (implicit "this"):
+class Byte {
+  unsigned char b;
+public:
+  Byte(unsigned char bb = 0) : b(bb) {}
+  // No side effects: const member function:
+  const Byte& operator+() const {
+    cout << "+Byte\n";
+    return *this;
+  }
+  const Byte operator-() const {
+    cout << "-Byte\n";
+    return Byte(-b);
+  }
+  const Byte operator~() const {
+    cout << "~Byte\n";
+    return Byte(~b);
+  }
+  Byte operator!() const {
+    cout << "!Byte\n";
+    return Byte(!b);
+  }
+  Byte* operator&() {
+    cout << "&Byte\n";
+    return this;
+  }
+  // Side effects: non-const member function:
+  const Byte& operator++() { // Prefix
+    cout << "++Byte\n";
+    b++;
+    return *this;
+  }
+  const Byte operator++(int) { // Postfix
+    cout << "Byte++\n";
+    Byte before(b);
+    b++;
+    return before;
+  }
+  const Byte& operator--() { // Prefix
+    cout << "--Byte\n";
+    --b;
+    return *this;
+  }
+  const Byte operator--(int) { // Postfix
+    cout << "Byte--\n";
+    Byte before(b);
+    --b;
+    return before;
+  }
+};
+
+void g(Byte b) {
+  +b;
+  -b;
+  ~b;
+  Byte* bp = &b;
+  !b;
+  ++b;
+  b++;
+  --b;
+  b--;
+}
+
+int main() {
+  Integer a;
+  f(a);
+  Byte b;
+  g(b);
+} ///:~
+							```
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## Overloading Binary Operators - Integer.h
+							```
+//: C12:Integer.h
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Non-member overloaded operators
+#ifndef INTEGER_H
+#define INTEGER_H
+#include <iostream>
+
+// Non-member functions:
+class Integer { 
+  long i;
+public:
+  Integer(long ll = 0) : i(ll) {}
+  // Operators that create new, modified value:
+  friend const Integer
+    operator+(const Integer& left,
+              const Integer& right);
+  friend const Integer
+    operator-(const Integer& left,
+              const Integer& right);
+  friend const Integer
+    operator*(const Integer& left,
+              const Integer& right);
+  friend const Integer
+    operator/(const Integer& left,
+              const Integer& right);
+  friend const Integer
+    operator%(const Integer& left,
+              const Integer& right);
+  friend const Integer
+    operator^(const Integer& left,
+              const Integer& right);
+  friend const Integer
+    operator&(const Integer& left,
+              const Integer& right);
+  friend const Integer
+    operator|(const Integer& left,
+              const Integer& right);
+  friend const Integer
+    operator<<(const Integer& left,
+               const Integer& right);
+  friend const Integer
+    operator>>(const Integer& left,
+               const Integer& right);
+  // Assignments modify & return lvalue:
+  friend Integer&
+    operator+=(Integer& left,
+               const Integer& right);
+  friend Integer&
+    operator-=(Integer& left,
+               const Integer& right);
+  friend Integer&
+    operator*=(Integer& left,
+               const Integer& right);
+  friend Integer&
+    operator/=(Integer& left,
+               const Integer& right);
+  friend Integer&
+    operator%=(Integer& left,
+               const Integer& right);
+  friend Integer&
+    operator^=(Integer& left,
+               const Integer& right);
+  friend Integer&
+    operator&=(Integer& left,
+               const Integer& right);
+  friend Integer&
+    operator|=(Integer& left,
+               const Integer& right);
+  friend Integer&
+    operator>>=(Integer& left,
+                const Integer& right);
+  friend Integer&
+    operator<<=(Integer& left,
+                const Integer& right);
+  // Conditional operators return true/false:
+  friend int
+    operator==(const Integer& left,
+               const Integer& right);
+  friend int
+    operator!=(const Integer& left,
+               const Integer& right);
+  friend int
+    operator<(const Integer& left,
+              const Integer& right);
+  friend int
+    operator>(const Integer& left,
+              const Integer& right);
+  friend int
+    operator<=(const Integer& left,
+               const Integer& right);
+  friend int
+    operator>=(const Integer& left,
+               const Integer& right);
+  friend int
+    operator&&(const Integer& left,
+               const Integer& right);
+  friend int
+    operator||(const Integer& left,
+               const Integer& right);
+  // Write the contents to an ostream:
+  void print(std::ostream& os) const { os << i; }
+}; 
+#endif // INTEGER_H ///:~
+							```
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## Overloading Binary Operators - Integer.cpp
+							```
+//: C12:Integer.cpp {O}
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Implementation of overloaded operators
+#include "Integer.h"
+#include "../require.h"
+
+const Integer
+  operator+(const Integer& left,
+            const Integer& right) {
+  return Integer(left.i + right.i);
+}
+const Integer
+  operator-(const Integer& left,
+            const Integer& right) {
+  return Integer(left.i - right.i);
+}
+const Integer
+  operator*(const Integer& left,
+            const Integer& right) {
+  return Integer(left.i * right.i);
+}
+const Integer
+  operator/(const Integer& left,
+            const Integer& right) {
+  require(right.i != 0, "divide by zero");
+  return Integer(left.i / right.i);
+}
+const Integer
+  operator%(const Integer& left,
+            const Integer& right) {
+  require(right.i != 0, "modulo by zero");
+  return Integer(left.i % right.i);
+}
+const Integer
+  operator^(const Integer& left,
+            const Integer& right) {
+  return Integer(left.i ^ right.i);
+}
+const Integer
+  operator&(const Integer& left,
+            const Integer& right) {
+  return Integer(left.i & right.i);
+}
+const Integer
+  operator|(const Integer& left,
+            const Integer& right) {
+  return Integer(left.i | right.i);
+}
+const Integer
+  operator<<(const Integer& left,
+             const Integer& right) {
+  return Integer(left.i << right.i);
+}
+const Integer
+  operator>>(const Integer& left,
+             const Integer& right) {
+  return Integer(left.i >> right.i);
+}
+// Assignments modify & return lvalue:
+Integer& operator+=(Integer& left,
+                    const Integer& right) {
+   if(&left == &right) {/* self-assignment */}
+   left.i += right.i;
+   return left;
+}
+Integer& operator-=(Integer& left,
+                    const Integer& right) {
+   if(&left == &right) {/* self-assignment */}
+   left.i -= right.i;
+   return left;
+}
+Integer& operator*=(Integer& left,
+                    const Integer& right) {
+   if(&left == &right) {/* self-assignment */}
+   left.i *= right.i;
+   return left;
+}
+Integer& operator/=(Integer& left,
+                    const Integer& right) {
+   require(right.i != 0, "divide by zero");
+   if(&left == &right) {/* self-assignment */}
+   left.i /= right.i;
+   return left;
+}
+Integer& operator%=(Integer& left,
+                    const Integer& right) {
+   require(right.i != 0, "modulo by zero");
+   if(&left == &right) {/* self-assignment */}
+   left.i %= right.i;
+   return left;
+}
+Integer& operator^=(Integer& left,
+                    const Integer& right) {
+   if(&left == &right) {/* self-assignment */}
+   left.i ^= right.i;
+   return left;
+}
+Integer& operator&=(Integer& left,
+                    const Integer& right) {
+   if(&left == &right) {/* self-assignment */}
+   left.i &= right.i;
+   return left;
+}
+Integer& operator|=(Integer& left,
+                    const Integer& right) {
+   if(&left == &right) {/* self-assignment */}
+   left.i |= right.i;
+   return left;
+}
+Integer& operator>>=(Integer& left,
+                     const Integer& right) {
+   if(&left == &right) {/* self-assignment */}
+   left.i >>= right.i;
+   return left;
+}
+Integer& operator<<=(Integer& left,
+                     const Integer& right) {
+   if(&left == &right) {/* self-assignment */}
+   left.i <<= right.i;
+   return left;
+}
+// Conditional operators return true/false:
+int operator==(const Integer& left,
+               const Integer& right) {
+    return left.i == right.i;
+}
+int operator!=(const Integer& left,
+               const Integer& right) {
+    return left.i != right.i;
+}
+int operator<(const Integer& left,
+              const Integer& right) {
+    return left.i < right.i;
+}
+int operator>(const Integer& left,
+              const Integer& right) {
+    return left.i > right.i;
+}
+int operator<=(const Integer& left,
+               const Integer& right) {
+    return left.i <= right.i;
+}
+int operator>=(const Integer& left,
+               const Integer& right) {
+    return left.i >= right.i;
+}
+int operator&&(const Integer& left,
+               const Integer& right) {
+    return left.i && right.i;
+}
+int operator||(const Integer& left,
+               const Integer& right) {
+    return left.i || right.i;
+} ///:~
+							```
+							* Note that these are non-members; they can also be members of the class too.
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## Operators You Can't Overload
+							* The dotoperator .
+							* The pointer to member dereference operator .*
+							* The scope resolution operator ::
+							* The conditional operators ? and :
+							* Your own user-defined operators
+						</script>
+					</section>
+				</section>
+				
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## Assignment Operator in Classes
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## Assignment Operator
+							* The = operator in the statement <code>a = b</code>
+							* The last piece of "orthodox canonical class form"    
+							
+							```
+//: C12:SimpleAssignment.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Simple operator=()
+#include <iostream>
+using namespace std;
+
+class Value {
+  int a, b;
+  float c;
+public:
+  Value(int aa = 0, int bb = 0, float cc = 0.0)
+    : a(aa), b(bb), c(cc) {}
+  Value& operator=(const Value& rv) {
+    a = rv.a;
+    b = rv.b;
+    c = rv.c;
+    return *this;
+  }
+  friend ostream&
+  operator<<(ostream& os, const Value& rv) {
+    return os << "a = " << rv.a << ", b = "
+      << rv.b << ", c = " << rv.c;
+  }
+};
+
+int main() {
+  Value a, b(1, 2, 3.3);
+  cout << "a: " << a << endl;
+  cout << "b: " << b << endl;
+  a = b;
+  cout << "a after assignment: " << a << endl;
+} ///:~
+							```
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## What about pointers?
+							```
+//: C12:CopyingWithPointers.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Solving the pointer aliasing problem by
+// duplicating what is pointed to during 
+// assignment and copy-construction.
+#include "require.h"
+#include <string>
+#include <iostream>
+using namespace std;
+
+class Dog {
+  string nm;
+public:
+  Dog(const string& name) : nm(name) {
+    cout << "Creating Dog: " << *this << endl;
+  }
+  // Synthesized copy-constructor & operator= 
+  // are correct.
+  // Create a Dog from a Dog pointer:
+  Dog(const Dog* dp, const string& msg) 
+    : nm(dp->nm + msg) {
+    cout << "Copied dog " << *this << " from "
+         << *dp << endl;
+  }
+  ~Dog() { 
+    cout << "Deleting Dog: " << *this << endl;
+  }
+  void rename(const string& newName) {
+    nm = newName;
+    cout << "Dog renamed to: " << *this << endl;
+  }
+  friend ostream&
+  operator<<(ostream& os, const Dog& d) {
+    return os << "[" << d.nm << "]";
+  }
+};
+
+class DogHouse {
+  Dog* p;
+  string houseName;
+public:
+  DogHouse(Dog* dog, const string& house)
+   : p(dog), houseName(house) {}
+  DogHouse(const DogHouse& dh)
+    : p(new Dog(dh.p, " copy-constructed")),
+      houseName(dh.houseName 
+        + " copy-constructed") {}
+  DogHouse& operator=(const DogHouse& dh) {
+    // Check for self-assignment:
+    if(&dh != this) {
+      p = new Dog(dh.p, " assigned");
+      houseName = dh.houseName + " assigned";
+    }
+    return *this;
+  }
+  void renameHouse(const string& newName) {
+    houseName = newName;
+  }
+  Dog* getDog() const { return p; }
+  ~DogHouse() { delete p; }
+  friend ostream&
+  operator<<(ostream& os, const DogHouse& dh) {
+    return os << "[" << dh.houseName 
+      << "] contains " << *dh.p;
+  }
+}; 
+
+int main() {
+  DogHouse fidos(new Dog("Fido"), "FidoHouse");
+  cout << fidos << endl;
+  DogHouse fidos2 = fidos; // Copy construction
+  cout << fidos2 << endl;
+  fidos2.getDog()->rename("Spot");
+  fidos2.renameHouse("SpotHouse");
+  cout << fidos2 << endl;
+  fidos = fidos2; // Assignment
+  cout << fidos << endl;
+  fidos.getDog()->rename("Max");
+  fidos2.renameHouse("MaxHouse");
+} ///:~
+							```
+							* You don't want to let the compiler make the default for you when you deal with pointers!!
+						</script>
+					</section>
+				</section>
+				
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## Inheritance
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## Composition
+							* A class in a class  
+							
+							```
+//: C14:Useful.h
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// A class to reuse
+#ifndef USEFUL_H
+#define USEFUL_H
+
+class X {
+  int i;
+public:
+  X() { i = 0; }
+  void set(int ii) { i = ii; }
+  int read() const { return i; }
+  int permute() { return i = i * 47; }
+};
+#endif // USEFUL_H ///:~
+							```
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## Composition Example
+							```
+//: C14:Composition.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Reuse code with composition
+#include "Useful.h"
+
+class Y {
+  int i;
+public:
+  X x; // Embedded object
+  Y() { i = 0; }
+  void f(int ii) { i = ii; }
+  int g() const { return i; }
+};
+
+int main() {
+  Y y;
+  y.f(47);
+  y.x.set(37); // Access the embedded object
+} ///:~
+							```
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## Inheritance
+							* Inherits members and functions from parent/base class  
+							
+							```
+//: C14:Inheritance.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Simple inheritance
+#include "Useful.h"
+#include <iostream>
+using namespace std;
+
+class Y : public X {
+  int i; // Different from X's i
+public:
+  Y() { i = 0; }
+  int change() {
+    i = permute(); // Different name call
+    return i;
+  }
+  void set(int ii) {
+    i = ii;
+    X::set(ii); // Same-name function call
+  }
+};
+
+int main() {
+  cout << "sizeof(X) = " << sizeof(X) << endl;
+  cout << "sizeof(Y) = "
+       << sizeof(Y) << endl;
+  Y D;
+  D.change();
+  // X function interface comes through:
+  D.read();
+  D.permute();
+  // Redefined functions hide base versions:
+  D.set(12);
+} ///:~
+							```
+							* Note the keyword public before X. It keeps the public-ness of the members of the base class.
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## Another Syntax for the Constructor
+							```
+//: C14:PseudoConstructor.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+class X {
+  int i;
+  float f;
+  char c;
+  char* s;
+public:
+  X() : i(7), f(1.4), c('x'), s("howdy") {}
+};
+
+int main() {
+  X x;
+  int i(100);  // Applied to ordinary definition
+  int* ip = new int(47);
+} ///:~
+							```
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## Order of Constructors & Destructors of Derived Classes
+							```
+//: C14:Order.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Constructor/destructor order
+#include <fstream>
+using namespace std;
+ofstream out("order.out");
+
+#define CLASS(ID) class ID { \
+public: \
+  ID(int) { out << #ID " constructor\n"; } \
+  ~ID() { out << #ID " destructor\n"; } \
+};
+
+CLASS(Base1);
+CLASS(Member1);
+CLASS(Member2);
+CLASS(Member3);
+CLASS(Member4);
+
+class Derived1 : public Base1 {
+  Member1 m1;
+  Member2 m2;
+public:
+  Derived1(int) : m2(1), m1(2), Base1(3) {
+    out << "Derived1 constructor\n";
+  }
+  ~Derived1() {
+    out << "Derived1 destructor\n";
+  }
+};
+
+class Derived2 : public Derived1 {
+  Member3 m3;
+  Member4 m4;
+public:
+  Derived2() : m3(1), Derived1(2), m4(3) {
+    out << "Derived2 constructor\n";
+  }
+  ~Derived2() {
+    out << "Derived2 destructor\n";
+  }
+};
+
+int main() {
+  Derived2 d2;
+} ///:~
+							```
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## Functions That Don't Automatically Inherit
+							* Constructors
+							* Destructors
+							* Assignment Operator
+						</script>
+					</section>
+					
+					<section data-markdown>
+						<script type="text/template">
+							## Choosing Composition vs. Inheritance
+							* Composition - when you want the features of an existing class inside your new class, but not the interface (functions)
+							* Composition - "has a" relationship
+							* Inheritance - when you want the members and functions of a base clas
+							* Inheritance - "is a" relationship
+						</script>
+					</section>
+				</section>
+				
+				<section>
+					<section data-markdown>
+						## Protected
+					</section>
+					
+					<section data-markdown>
+						## Protected Example
+						* Protected means it is private to everything outside of the class and its derived classes.  
+						
+						```
+//: C14:Protected.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// The protected keyword
+#include <fstream>
+using namespace std;
+
+class Base {
+  int i;
+protected:
+  int read() const { return i; }
+  void set(int ii) { i = ii; }
+public:
+  Base(int ii = 0) : i(ii) {}
+  int value(int m) const { return m*i; }
+};
+
+class Derived : public Base {
+  int j;
+public:
+  Derived(int jj = 0) : j(jj) {}
+  void change(int x) { set(x); }
+}; 
+
+int main() {
+  Derived d;
+  d.change(10);
+} ///:~
+						```
+					</section>
+				</section>
+					
+
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## GDB
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## What is GDB?
+                            * A debugger for C and C++ (along with Pascal, Objective-C, and Fortran).
+                            * Does 4 main things:
+                                * Start your program, specifying anything that might affect its behavior
+                                * Make your program stop on specified conditions
+                                * Examine what has happened when your program stopped
+                                * Change things in your program so you can experiment with correcting the effects of one bug
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Sample Segmentation Fault Program
+                            ```
+#include <stdio.h>
+
+int main()
+{
+    int a, b, c;
+    char d, e, f;
+    a = 1;
+    b = 2;
+    d = 'D';
+    e = 'E';
+
+    int *a_ptr, *b_ptr, *c_ptr;
+    char *d_ptr, *e_ptr, *f_ptr;
+
+    a_ptr = &a;
+    b_ptr = a_ptr;
+    c_ptr = b_ptr;
+
+    d_ptr = &d;
+    e_ptr = d_ptr;
+    f_ptr = d_ptr;
+
+    char *ptr = NULL; // Null pointer
+    printf("%c", *ptr);
+
+    return 0;
+}
+                            ```
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Compiling a Program for Debugging
+                            * <code>g++ -g segfault.cpp</code>
+                                * The -g flag enables built-in debugging support; note that the file size is slightly bigger and it takes more time
+                            * <code>gdb</code>
+                                * Start the gdb interface
+                            * <code>(gdb) help</code>
+                                * get the help menu
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Running a Program in GDB
+                            * <code>(gdb) file a.exe</code>
+                                * loads the executable in gdb
+                            * <code>(gdb) run</code>
+                                * runs the executable
+                            * <code>(gdb) continue</code>
+                                * continues the program
+                        </script>
+                    </section>
+                </section>
+                
+                
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Breakpoints
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Breakpoints Instructions
+                            * Places in code to tell gdb to stop so you can analyze the code
+                            * <code>(gdb) break segfault.cpp:8</code>
+                                * Note that it stops before an actionable line (initialization/assignment/function call)
+                                * Can also break at a specific function w/ the function name
+                            * <code>(gdb) run</code>
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Checking Variable Values
+                            * <code>(gdb) step</code>
+                                * steps through the program line by line; enter to repeat
+                            * <code>(gdb) next</code>  
+                                * goes inside a function; more on that later
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Checking Variable Values
+                            * <code>(gdb) print a</code>  
+                            * <code>(gdb) print a_ptr</code>  
+                            * <code>(gdb) print *a_ptr</code>  
+                            * <code>(gdb) print ptr</code> - NULL Pointer
+                            * <code>(gdb) print *ptr</code> - can't access!
+                        </script>
+                    </section>
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Stepping into Functions
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Stepping into Functions Sample  
+                            ```
+#include <stdio.h>
+
+void sample_function()
+{
+    int a, b, c;
+    a = 101;
+    b = 102;
+    char d, e, f;
+    d = 'd';
+    e = 'e';
+    
+    return;
+}
+
+int main()
+{
+    sample_function();
+    
+    int a, b, c;
+    char d, e, f;
+    a = 1;
+    b = 2;
+    d = 'D';
+    e = 'E';
+
+    int *a_ptr, *b_ptr, *c_ptr;
+    char *d_ptr, *e_ptr, *f_ptr;
+
+    a_ptr = &a;
+    b_ptr = a_ptr;
+    c_ptr = b_ptr;
+
+    d_ptr = &d;
+    e_ptr = d_ptr;
+    f_ptr = d_ptr;
+
+    char *ptr = NULL; // Null pointer
+    printf("%c", *ptr);
+
+    return 0;
+}
+
+                            ```
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Stepping into a Function  
+                            * <code>(gdb) break segfault_func.cpp:17</code>
+                            * <code>(gdb) step</code>
+                                * Note that this time, we actually entered the function
+                                * Also note that the variables are in the scope of the function, not main
+                        </script>
+                    </section>
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Watching Variables
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Modified Program
+                            ```
+#include <stdio.h>
+
+void sample_function()
+{
+    int a, b, c;
+    a = 101;
+    b = 102;
+    char d, e, f;
+    d = 'd';
+    e = 'e';
+    
+    return;
+}
+
+int main()
+{
+    sample_function();
+    
+    int a, b, c;
+    char d, e, f;
+    a = 1;
+    b = 2;
+    d = 'D';
+    e = 'E';
+    a = 11;
+    a = 111;
+
+    int *a_ptr, *b_ptr, *c_ptr;
+    char *d_ptr, *e_ptr, *f_ptr;
+
+    a_ptr = &a;
+    b_ptr = a_ptr;
+    c_ptr = b_ptr;
+
+    d_ptr = &d;
+    e_ptr = d_ptr;
+    f_ptr = d_ptr;
+
+    char *ptr = NULL; // Null pointer
+    printf("%c", *ptr);
+
+    return 0;
+}
+                            ```
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## GDB Watch  
+                            * <code>gdb</code>
+                            * <code>(gdb) file a.exe</code>
+                            * <code>(gdb) break segfault_watch.cpp:17</code>
+                            * <code>(gdb) run</code>
+                            * <code>(gdb) watch a</code> - whenever a changes, it will print the old and new values and stop before the next line
+                            * <code>(gdb) next</code>
+                        </script>
+                    </section>
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Other Features
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Other GDB Commands
+                            * <code>breaktrace</code> - stack trace leading to a seg fault
+                            * <code>where</code> - same as backtrace, but in middle of program (e.g. in a function or in main)
+                            * <code>finish</code> - runs until current function finishes
+                            * <code>info breakpoints</code> - shows all declared breakpoints
+                            * <code>clear file:linenum</code> - deletes breakpoint
+                            * <code>delete</code> - deletes all breakpoints
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Conditional Breakpoints  
+                            * <code>(gdb) break segfault_watch.cpp:27 if a >=100</code>
+                                * stops at line 27 if the variable a is greater than 100
+                        </script>
+                    </section>
+                </section>
+					
+				<section>
+					<section data-markdown>
+						<textarea data-template>
+						## Homework
+						* Reading: Thinking in C++ Ch 14
+						* <a href="https://classroom.github.com/g/qXFZI1NK">
+						https://classroom.github.com/g/qXFZI1NK
+						</a>
+						</textarea>
+					</section>
+				</section>
+				
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
