@@ -1,1302 +1,787 @@
 <!doctype html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>ECE160 - Lesson 11 - Inheritance, Composition, Debugging & Testing</title>
+        <title>ECE160B - Lesson 12 - Classes - Polymorphism & Virtual Functions</title>
 
-		<link rel="stylesheet" href="css/reveal.css">
-		<link rel="stylesheet" href="css/theme/black.css">
+        <link rel="stylesheet" href="css/reveal.css">
+        <link rel="stylesheet" href="css/theme/black.css">
 
-		<!-- Theme used for syntax highlighting of code -->
-		<link rel="stylesheet" href="lib/css/zenburn.css">
+        <!-- Theme used for syntax highlighting of code -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
 
-		<!-- Printing and PDF exports -->
-		<script>
-			var link = document.createElement( 'link' );
-			link.rel = 'stylesheet';
-			link.type = 'text/css';
-			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
-			document.getElementsByTagName( 'head' )[0].appendChild( link );
-		</script>
-	</head>
-	<body>
-		<div class="reveal">
-			<div class="slides">
-				<section>
-					<h1>ECE160 - Lesson 11</h1>
-					<h3>Inheritance, Composition, Debugging & Testing</h3>
-					<p>
-						<small>Professor Hong</small>
-					</p>
-					
-				</section>
-						
-				<section>
-					<section data-markdown>
-						<textarea data-template>
-						## Review & Questions
-						</textarea>
-					</section>
-				</section>
-				
-				<section>
-					<section data-markdown>
-						<textarea data-template>
-						## Quiz #5  
-						* 50 minutes
-						</textarea>
-					</section>
-				</section>
-				
-				
-				<section>
-					<section data-markdown>
-						<script type="text/template">
-							## Operator Overloading
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## How to Overload an Operator
-							* <code>operator@</code> where @ is the operator being overloaded   
-							
-							```
-//: C12:OperatorOverloadingSyntax.cpp
+        <!-- Printing and PDF exports -->
+        <script>
+            var link = document.createElement( 'link' );
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            document.getElementsByTagName( 'head' )[0].appendChild( link );
+        </script>
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section>
+                    <h1>ECE160B - Lesson 12</h1>
+                    <h3>Classes - Polymorphism & Virtual Functions</h3>
+                    <p>
+                        <small>Professor Hong</small>
+                    </p>
+                    
+                </section>
+                       
+                <section>
+                    <section data-markdown>
+                        <textarea data-template>
+                        ## Review & Questions
+                        </textarea>
+                    </section>
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                        <textarea data-template>
+                        ## Quiz #5
+                        * Pair Quiz
+                        * Closed Book
+                        * No Laptops
+                        * 45 minutes
+                        </textarea>
+                    </section>
+                </section>
+                
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Polymorphism
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## What is Polymorphism?
+                            * 1 interface for different entity types
+                            * Achieved in C++ with abstract base classes & virtual functions
+                        </script>
+                    </section>
+                </section>
+                    
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Upcasting
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## What is Upcasting?  
+                            * Converting a reference or pointer of type derived class to the base class (downcasting is the opposite, but is discouraged!)  
+                            * Lose any info about the derived class & its members!!
+                            
+                            ```
+//: C14:Instrument.cpp
 // From Thinking in C++, 2nd Edition
 // Available at http://www.BruceEckel.com
 // (c) Bruce Eckel 2000
 // Copyright notice in Copyright.txt
+// Inheritance & upcasting
+
 #include <iostream>
 using namespace std;
 
-class Integer {
+enum note { middleC, Csharp, Cflat }; // Etc.
+
+class Instrument {
 public:
-  int i;
-  Integer(int ii) : i(ii) {}
-  const Integer
-  operator+(const Integer& rv) const {
-    cout << "operator+" << endl;
-    return Integer(i + rv.i);
-  }
-  Integer&
-  operator+=(const Integer& rv) {
-    cout << "operator+=" << endl;
-    i += rv.i;
-    return *this;
-  }
+  void play(int note) const {cout << note << endl;}
 };
 
+// Wind objects are Instruments
+// because they have the same interface:
+class Wind : public Instrument {};
+
+void tune(Instrument& i) {
+  // ...
+  i.play(Csharp);
+}
+
 int main() {
-  cout << "built-in types:" << endl;
-  int i = 1, j = 2, k = 3;
-  k += i + j;
-  cout << "k = " << k << endl;
-  cout << "user-defined types:" << endl;
-  Integer ii(1), jj(2), kk(3);
-  kk += ii + jj;
-  cout << "kk = " << kk.i << endl;
+  Wind flute;
+  tune(flute); // Upcasting Wind class ref to an Instrument class ref
 } ///:~
-							```
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## Overloading Unary Operators
-							```
-//: C12:OverloadingUnaryOperators.cpp
+                            ```
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## More Upcasting  
+                            * Which class do you think will be played?  
+                            
+                            ```
+//: C15:Instrument2.cpp
 // From Thinking in C++, 2nd Edition
 // Available at http://www.BruceEckel.com
 // (c) Bruce Eckel 2000
 // Copyright notice in Copyright.txt
+// Inheritance & upcasting
+#include <iostream>
+using namespace std;
+enum note { middleC, Csharp, Eflat }; // Etc.
+
+class Instrument {
+public:
+  void play(note) const {
+    cout << "Instrument::play" << endl;
+  }
+};
+
+// Wind objects are Instruments
+// because they have the same interface:
+class Wind : public Instrument {
+public:
+  // Redefine interface function:
+  void play(note) const {
+    cout << "Wind::play" << endl;
+  }
+};
+
+void tune(Instrument& i) {
+  // ...
+  i.play(middleC);
+}
+
+int main() {
+  Wind flute;
+  tune(flute); // Upcasting
+} ///:~
+                            ```
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Binding
+                            * Connects a function call to a function body
+                            * Early Binding - binding is performed before the program is run
+                                * Caused the problem with Instrument2.cpp
+                            * Late Binding - binding occurs at runtime
+                                * <code>virtual</code> allows late binding
+                        </script>
+                    </section>
+                </section>
+
+                <section>
+                
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Virtual Functions
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## What are Virtual Functions?
+                            * Functions that cause late binding
+                            * Declared in the base class and is made virtual across all derived classes
+                            * You can use the <code>virtual</code> for all derived classes, but it's redundant
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Virtual Play Function - Instrument3.cpp
+                            ```
+//: C15:Instrument3.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Late binding with the virtual keyword
+#include <iostream>
+using namespace std;
+enum note { middleC, Csharp, Cflat }; // Etc.
+
+class Instrument {
+public:
+  virtual void play(note) const {
+    cout << "Instrument::play" << endl;
+  }
+};
+
+// Wind objects are Instruments
+// because they have the same interface:
+class Wind : public Instrument {
+public:
+  // Override interface function:
+  void play(note) const {
+    cout << "Wind::play" << endl;
+  }
+};
+
+void tune(Instrument& i) {
+  // ...
+  i.play(middleC);
+}
+
+int main() {
+  Wind flute;
+  tune(flute); // Upcasting
+} ///:~
+                            ```
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Extensibility  
+                            * Note that the function tune() remains the same
+                            * Note that the nearest adjust virtual function is called for flugelhorn
+                            
+                            ```
+//: C15:Instrument4.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Extensibility in OOP
+#include <iostream>
+using namespace std;
+enum note { middleC, Csharp, Cflat }; // Etc.
+
+class Instrument {
+public:
+  virtual void play(note) const {
+    cout << "Instrument::play" << endl;
+  }
+  // Assume this will modify the object:
+  virtual void adjust(int) {
+    cout << "Instrument::adjust" << endl;
+  }
+};
+
+class Wind : public Instrument {
+public:
+  void play(note) const {
+    cout << "Wind::play" << endl;
+  }
+  void adjust(int) {
+    cout << "Wind::adjust" << endl;
+  }
+};
+
+class Percussion : public Instrument {
+public:
+  void play(note) const {
+    cout << "Percussion::play" << endl;
+  }
+  void adjust(int) {
+    cout << "Percussion::adjust" << endl;
+  }
+};
+
+class Stringed : public Instrument {
+public:
+  void play(note) const {
+    cout << "Stringed::play" << endl;
+  }
+  void adjust(int) {
+    cout << "Stringed::adjust" << endl;
+  }
+};
+
+class Brass : public Wind {
+public:
+  void play(note) const {
+    cout << "Brass::play" << endl;
+  }
+};
+
+class Woodwind : public Wind {
+public:
+  void play(note) const {
+    cout << "Woodwind::play" << endl;
+  }
+};
+
+// Identical function from before:
+void tune(Instrument& i) {
+  // ...
+  i.play(middleC);
+}
+
+// New function:
+void f(Instrument& i) { i.adjust(1); }
+
+// Upcasting during array initialization:
+Instrument* A[] = {
+  new Wind,
+  new Percussion,
+  new Stringed,
+  new Brass,
+};
+
+int main() {
+  Wind flute;
+  Percussion drum;
+  Stringed violin;
+  Brass flugelhorn;
+  Woodwind recorder;
+  tune(flute);
+  tune(drum);
+  tune(violin);
+  tune(flugelhorn);
+  tune(recorder);
+  f(flugelhorn);
+} ///:~
+                            ```
+                        </script>
+                    </section>
+                    
+                </section>
+                
+                
+                <section>
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Abstract Base Classes
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## What are abstract base classes?
+                            * Classes that aren't meant to be created in code
+                            * They are created when the class has at least 1 pure virtual function
+                            * Pure virtual functions are declared with the virtual key word and the function is followed by =0
+                            * Must be defined in the derived classes
+                            * The compiler will enforce that this class cannot be created
+                            * Upcasting must always use a pointer or a reference, since the base class cannot be created via a copy constructor (passed by value)
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Abstract Instrument Class - Instrument5.cpp
+                            ```
+//: C15:Instrument5.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Pure abstract base classes
+#include <iostream>
+using namespace std;
+enum note { middleC, Csharp, Cflat }; // Etc.
+
+class Instrument {
+public:
+  // Pure virtual functions:
+  virtual void play(note) const = 0;
+  // Assume this will modify the object:
+  virtual void adjust(int) = 0;
+};
+// Rest of the file is the same ...
+
+class Wind : public Instrument {
+public:
+  void play(note) const {
+    cout << "Wind::play" << endl;
+  }
+  void adjust(int) {
+    cout << "Wind::adjust" << endl;
+  }
+};
+
+class Percussion : public Instrument {
+public:
+  void play(note) const {
+    cout << "Percussion::play" << endl;
+  }
+  void adjust(int) {    
+    cout << "Percussion::adjust" << endl;
+  }
+};
+
+class Stringed : public Instrument {
+public:
+  void play(note) const {
+    cout << "Stringed::play" << endl;
+  }
+  void adjust(int) {
+    cout << "Stringed::adjust" << endl;
+  }
+};
+
+class Brass : public Wind {
+public:
+  void play(note) const {
+    cout << "Brass::play" << endl;
+  }
+};
+
+class Woodwind : public Wind {
+public:
+  void play(note) const {
+    cout << "Woodwind::play" << endl;
+  }
+};
+
+// Identical function from before:
+void tune(Instrument& i) {
+  // ...
+  i.play(middleC);
+}
+
+// New function:
+void f(Instrument& i) { i.adjust(1); }
+
+int main() {
+  Wind flute;
+  Percussion drum;
+  Stringed violin;
+  Brass flugelhorn;
+  Woodwind recorder;
+  tune(flute);
+  tune(drum);
+  tune(violin);
+  tune(flugelhorn);
+  tune(recorder);
+  f(flugelhorn);
+
+  //Instrument myInstrument; // ILLEGAL
+} ///:~
+                            ```
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Pure Virtual Definitions  
+                            * Reused code across virtual functions  
+                            
+                            ```
+//: C15:PureVirtualDefinitions.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Pure virtual base definitions
 #include <iostream>
 using namespace std;
 
-// Non-member functions:
-class Integer {
-  long i;
-  Integer* This() { return this; }
+class Pet {
 public:
-  Integer(long ll = 0) : i(ll) {}
-  // No side effects takes const& argument:
-  friend const Integer&
-    operator+(const Integer& a);
-  friend const Integer
-    operator-(const Integer& a);
-  friend const Integer
-    operator~(const Integer& a);
-  friend Integer*
-    operator&(Integer& a);
-  friend int
-    operator!(const Integer& a);
-  // Side effects have non-const& argument:
-  // Prefix:
-  friend const Integer&
-    operator++(Integer& a);
-  // Postfix:
-  friend const Integer
-    operator++(Integer& a, int);
-  // Prefix:
-  friend const Integer&
-    operator--(Integer& a);
-  // Postfix:
-  friend const Integer
-    operator--(Integer& a, int);
+  virtual void speak() const = 0;
+  virtual void eat() const = 0;
+  // Inline pure virtual definitions illegal:
+  //!  virtual void sleep() const = 0 {}
 };
 
-// Global operators:
-const Integer& operator+(const Integer& a) {
-  cout << "+Integer\n";
-  return a; // Unary + has no effect
-}
-const Integer operator-(const Integer& a) {
-  cout << "-Integer\n";
-  return Integer(-a.i);
-}
-const Integer operator~(const Integer& a) {
-  cout << "~Integer\n";
-  return Integer(~a.i);
-}
-Integer* operator&(Integer& a) {
-  cout << "&Integer\n";
-  return a.This(); // &a is recursive!
-}
-int operator!(const Integer& a) {
-  cout << "!Integer\n";
-  return !a.i;
-}
-// Prefix; return incremented value
-const Integer& operator++(Integer& a) {
-  cout << "++Integer\n";
-  a.i++;
-  return a;
-}
-// Postfix; return the value before increment:
-const Integer operator++(Integer& a, int) {
-  cout << "Integer++\n";
-  Integer before(a.i);
-  a.i++;
-  return before;
-}
-// Prefix; return decremented value
-const Integer& operator--(Integer& a) {
-  cout << "--Integer\n";
-  a.i--;
-  return a;
-}
-// Postfix; return the value before decrement:
-const Integer operator--(Integer& a, int) {
-  cout << "Integer--\n";
-  Integer before(a.i);
-  a.i--;
-  return before;
+// OK, not defined inline
+void Pet::eat() const {
+  cout << "Pet::eat()" << endl;
 }
 
-// Show that the overloaded operators work:
-void f(Integer a) {
-  +a;
-  -a;
-  ~a;
-  Integer* ip = &a;
-  !a;
-  ++a;
-  a++;
-  --a;
-  a--;
+void Pet::speak() const { 
+  cout << "Pet::speak()" << endl;
 }
 
-// Member functions (implicit "this"):
-class Byte {
-  unsigned char b;
+class Dog : public Pet {
 public:
-  Byte(unsigned char bb = 0) : b(bb) {}
-  // No side effects: const member function:
-  const Byte& operator+() const {
-    cout << "+Byte\n";
-    return *this;
-  }
-  const Byte operator-() const {
-    cout << "-Byte\n";
-    return Byte(-b);
-  }
-  const Byte operator~() const {
-    cout << "~Byte\n";
-    return Byte(~b);
-  }
-  Byte operator!() const {
-    cout << "!Byte\n";
-    return Byte(!b);
-  }
-  Byte* operator&() {
-    cout << "&Byte\n";
-    return this;
-  }
-  // Side effects: non-const member function:
-  const Byte& operator++() { // Prefix
-    cout << "++Byte\n";
-    b++;
-    return *this;
-  }
-  const Byte operator++(int) { // Postfix
-    cout << "Byte++\n";
-    Byte before(b);
-    b++;
-    return before;
-  }
-  const Byte& operator--() { // Prefix
-    cout << "--Byte\n";
-    --b;
-    return *this;
-  }
-  const Byte operator--(int) { // Postfix
-    cout << "Byte--\n";
-    Byte before(b);
-    --b;
-    return before;
-  }
-};
-
-void g(Byte b) {
-  +b;
-  -b;
-  ~b;
-  Byte* bp = &b;
-  !b;
-  ++b;
-  b++;
-  --b;
-  b--;
-}
-
-int main() {
-  Integer a;
-  f(a);
-  Byte b;
-  g(b);
-} ///:~
-							```
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## Overloading Binary Operators - Integer.h
-							```
-//: C12:Integer.h
-// From Thinking in C++, 2nd Edition
-// Available at http://www.BruceEckel.com
-// (c) Bruce Eckel 2000
-// Copyright notice in Copyright.txt
-// Non-member overloaded operators
-#ifndef INTEGER_H
-#define INTEGER_H
-#include <iostream>
-
-// Non-member functions:
-class Integer { 
-  long i;
-public:
-  Integer(long ll = 0) : i(ll) {}
-  // Operators that create new, modified value:
-  friend const Integer
-    operator+(const Integer& left,
-              const Integer& right);
-  friend const Integer
-    operator-(const Integer& left,
-              const Integer& right);
-  friend const Integer
-    operator*(const Integer& left,
-              const Integer& right);
-  friend const Integer
-    operator/(const Integer& left,
-              const Integer& right);
-  friend const Integer
-    operator%(const Integer& left,
-              const Integer& right);
-  friend const Integer
-    operator^(const Integer& left,
-              const Integer& right);
-  friend const Integer
-    operator&(const Integer& left,
-              const Integer& right);
-  friend const Integer
-    operator|(const Integer& left,
-              const Integer& right);
-  friend const Integer
-    operator<<(const Integer& left,
-               const Integer& right);
-  friend const Integer
-    operator>>(const Integer& left,
-               const Integer& right);
-  // Assignments modify & return lvalue:
-  friend Integer&
-    operator+=(Integer& left,
-               const Integer& right);
-  friend Integer&
-    operator-=(Integer& left,
-               const Integer& right);
-  friend Integer&
-    operator*=(Integer& left,
-               const Integer& right);
-  friend Integer&
-    operator/=(Integer& left,
-               const Integer& right);
-  friend Integer&
-    operator%=(Integer& left,
-               const Integer& right);
-  friend Integer&
-    operator^=(Integer& left,
-               const Integer& right);
-  friend Integer&
-    operator&=(Integer& left,
-               const Integer& right);
-  friend Integer&
-    operator|=(Integer& left,
-               const Integer& right);
-  friend Integer&
-    operator>>=(Integer& left,
-                const Integer& right);
-  friend Integer&
-    operator<<=(Integer& left,
-                const Integer& right);
-  // Conditional operators return true/false:
-  friend int
-    operator==(const Integer& left,
-               const Integer& right);
-  friend int
-    operator!=(const Integer& left,
-               const Integer& right);
-  friend int
-    operator<(const Integer& left,
-              const Integer& right);
-  friend int
-    operator>(const Integer& left,
-              const Integer& right);
-  friend int
-    operator<=(const Integer& left,
-               const Integer& right);
-  friend int
-    operator>=(const Integer& left,
-               const Integer& right);
-  friend int
-    operator&&(const Integer& left,
-               const Integer& right);
-  friend int
-    operator||(const Integer& left,
-               const Integer& right);
-  // Write the contents to an ostream:
-  void print(std::ostream& os) const { os << i; }
-}; 
-#endif // INTEGER_H ///:~
-							```
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## Overloading Binary Operators - Integer.cpp
-							```
-//: C12:Integer.cpp {O}
-// From Thinking in C++, 2nd Edition
-// Available at http://www.BruceEckel.com
-// (c) Bruce Eckel 2000
-// Copyright notice in Copyright.txt
-// Implementation of overloaded operators
-#include "Integer.h"
-#include "../require.h"
-
-const Integer
-  operator+(const Integer& left,
-            const Integer& right) {
-  return Integer(left.i + right.i);
-}
-const Integer
-  operator-(const Integer& left,
-            const Integer& right) {
-  return Integer(left.i - right.i);
-}
-const Integer
-  operator*(const Integer& left,
-            const Integer& right) {
-  return Integer(left.i * right.i);
-}
-const Integer
-  operator/(const Integer& left,
-            const Integer& right) {
-  require(right.i != 0, "divide by zero");
-  return Integer(left.i / right.i);
-}
-const Integer
-  operator%(const Integer& left,
-            const Integer& right) {
-  require(right.i != 0, "modulo by zero");
-  return Integer(left.i % right.i);
-}
-const Integer
-  operator^(const Integer& left,
-            const Integer& right) {
-  return Integer(left.i ^ right.i);
-}
-const Integer
-  operator&(const Integer& left,
-            const Integer& right) {
-  return Integer(left.i & right.i);
-}
-const Integer
-  operator|(const Integer& left,
-            const Integer& right) {
-  return Integer(left.i | right.i);
-}
-const Integer
-  operator<<(const Integer& left,
-             const Integer& right) {
-  return Integer(left.i << right.i);
-}
-const Integer
-  operator>>(const Integer& left,
-             const Integer& right) {
-  return Integer(left.i >> right.i);
-}
-// Assignments modify & return lvalue:
-Integer& operator+=(Integer& left,
-                    const Integer& right) {
-   if(&left == &right) {/* self-assignment */}
-   left.i += right.i;
-   return left;
-}
-Integer& operator-=(Integer& left,
-                    const Integer& right) {
-   if(&left == &right) {/* self-assignment */}
-   left.i -= right.i;
-   return left;
-}
-Integer& operator*=(Integer& left,
-                    const Integer& right) {
-   if(&left == &right) {/* self-assignment */}
-   left.i *= right.i;
-   return left;
-}
-Integer& operator/=(Integer& left,
-                    const Integer& right) {
-   require(right.i != 0, "divide by zero");
-   if(&left == &right) {/* self-assignment */}
-   left.i /= right.i;
-   return left;
-}
-Integer& operator%=(Integer& left,
-                    const Integer& right) {
-   require(right.i != 0, "modulo by zero");
-   if(&left == &right) {/* self-assignment */}
-   left.i %= right.i;
-   return left;
-}
-Integer& operator^=(Integer& left,
-                    const Integer& right) {
-   if(&left == &right) {/* self-assignment */}
-   left.i ^= right.i;
-   return left;
-}
-Integer& operator&=(Integer& left,
-                    const Integer& right) {
-   if(&left == &right) {/* self-assignment */}
-   left.i &= right.i;
-   return left;
-}
-Integer& operator|=(Integer& left,
-                    const Integer& right) {
-   if(&left == &right) {/* self-assignment */}
-   left.i |= right.i;
-   return left;
-}
-Integer& operator>>=(Integer& left,
-                     const Integer& right) {
-   if(&left == &right) {/* self-assignment */}
-   left.i >>= right.i;
-   return left;
-}
-Integer& operator<<=(Integer& left,
-                     const Integer& right) {
-   if(&left == &right) {/* self-assignment */}
-   left.i <<= right.i;
-   return left;
-}
-// Conditional operators return true/false:
-int operator==(const Integer& left,
-               const Integer& right) {
-    return left.i == right.i;
-}
-int operator!=(const Integer& left,
-               const Integer& right) {
-    return left.i != right.i;
-}
-int operator<(const Integer& left,
-              const Integer& right) {
-    return left.i < right.i;
-}
-int operator>(const Integer& left,
-              const Integer& right) {
-    return left.i > right.i;
-}
-int operator<=(const Integer& left,
-               const Integer& right) {
-    return left.i <= right.i;
-}
-int operator>=(const Integer& left,
-               const Integer& right) {
-    return left.i >= right.i;
-}
-int operator&&(const Integer& left,
-               const Integer& right) {
-    return left.i && right.i;
-}
-int operator||(const Integer& left,
-               const Integer& right) {
-    return left.i || right.i;
-} ///:~
-							```
-							* Note that these are non-members; they can also be members of the class too.
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## Operators You Can't Overload
-							* The dotoperator .
-							* The pointer to member dereference operator .*
-							* The scope resolution operator ::
-							* The conditional operators ? and :
-							* Your own user-defined operators
-						</script>
-					</section>
-				</section>
-				
-				<section>
-					<section data-markdown>
-						<script type="text/template">
-							## Assignment Operator in Classes
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## Assignment Operator
-							* The = operator in the statement <code>a = b</code>
-							* The last piece of "orthodox canonical class form"    
-							
-							```
-//: C12:SimpleAssignment.cpp
-// From Thinking in C++, 2nd Edition
-// Available at http://www.BruceEckel.com
-// (c) Bruce Eckel 2000
-// Copyright notice in Copyright.txt
-// Simple operator=()
-#include <iostream>
-using namespace std;
-
-class Value {
-  int a, b;
-  float c;
-public:
-  Value(int aa = 0, int bb = 0, float cc = 0.0)
-    : a(aa), b(bb), c(cc) {}
-  Value& operator=(const Value& rv) {
-    a = rv.a;
-    b = rv.b;
-    c = rv.c;
-    return *this;
-  }
-  friend ostream&
-  operator<<(ostream& os, const Value& rv) {
-    return os << "a = " << rv.a << ", b = "
-      << rv.b << ", c = " << rv.c;
-  }
+  // Use the common Pet code:
+  void speak() const { Pet::speak(); }
+  void eat() const { Pet::eat(); }
 };
 
 int main() {
-  Value a, b(1, 2, 3.3);
-  cout << "a: " << a << endl;
-  cout << "b: " << b << endl;
-  a = b;
-  cout << "a after assignment: " << a << endl;
+  Dog simba;  // Richard's dog
+  simba.speak();
+  simba.eat();
 } ///:~
-							```
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## What about pointers?
-							```
-//: C12:CopyingWithPointers.cpp
+                            ```
+                        </script>
+                    </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Overloading and Overriding Virtual Functions  
+                            * You cannot change the return type of a virtual function
+                            
+                            ```
+//: C15:NameHiding2.cpp
 // From Thinking in C++, 2nd Edition
 // Available at http://www.BruceEckel.com
 // (c) Bruce Eckel 2000
 // Copyright notice in Copyright.txt
-// Solving the pointer aliasing problem by
-// duplicating what is pointed to during 
-// assignment and copy-construction.
-#include "require.h"
+// Virtual functions restrict overloading
+#include <iostream>
 #include <string>
-#include <iostream>
-using namespace std;
-
-class Dog {
-  string nm;
-public:
-  Dog(const string& name) : nm(name) {
-    cout << "Creating Dog: " << *this << endl;
-  }
-  // Synthesized copy-constructor & operator= 
-  // are correct.
-  // Create a Dog from a Dog pointer:
-  Dog(const Dog* dp, const string& msg) 
-    : nm(dp->nm + msg) {
-    cout << "Copied dog " << *this << " from "
-         << *dp << endl;
-  }
-  ~Dog() { 
-    cout << "Deleting Dog: " << *this << endl;
-  }
-  void rename(const string& newName) {
-    nm = newName;
-    cout << "Dog renamed to: " << *this << endl;
-  }
-  friend ostream&
-  operator<<(ostream& os, const Dog& d) {
-    return os << "[" << d.nm << "]";
-  }
-};
-
-class DogHouse {
-  Dog* p;
-  string houseName;
-public:
-  DogHouse(Dog* dog, const string& house)
-   : p(dog), houseName(house) {}
-  DogHouse(const DogHouse& dh)
-    : p(new Dog(dh.p, " copy-constructed")),
-      houseName(dh.houseName 
-        + " copy-constructed") {}
-  DogHouse& operator=(const DogHouse& dh) {
-    // Check for self-assignment:
-    if(&dh != this) {
-      p = new Dog(dh.p, " assigned");
-      houseName = dh.houseName + " assigned";
-    }
-    return *this;
-  }
-  void renameHouse(const string& newName) {
-    houseName = newName;
-  }
-  Dog* getDog() const { return p; }
-  ~DogHouse() { delete p; }
-  friend ostream&
-  operator<<(ostream& os, const DogHouse& dh) {
-    return os << "[" << dh.houseName 
-      << "] contains " << *dh.p;
-  }
-}; 
-
-int main() {
-  DogHouse fidos(new Dog("Fido"), "FidoHouse");
-  cout << fidos << endl;
-  DogHouse fidos2 = fidos; // Copy construction
-  cout << fidos2 << endl;
-  fidos2.getDog()->rename("Spot");
-  fidos2.renameHouse("SpotHouse");
-  cout << fidos2 << endl;
-  fidos = fidos2; // Assignment
-  cout << fidos << endl;
-  fidos.getDog()->rename("Max");
-  fidos2.renameHouse("MaxHouse");
-} ///:~
-							```
-							* You don't want to let the compiler make the default for you when you deal with pointers!!
-						</script>
-					</section>
-				</section>
-				
-				<section>
-					<section data-markdown>
-						<script type="text/template">
-							## Inheritance
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## Composition
-							* A class in a class  
-							
-							```
-//: C14:Useful.h
-// From Thinking in C++, 2nd Edition
-// Available at http://www.BruceEckel.com
-// (c) Bruce Eckel 2000
-// Copyright notice in Copyright.txt
-// A class to reuse
-#ifndef USEFUL_H
-#define USEFUL_H
-
-class X {
-  int i;
-public:
-  X() { i = 0; }
-  void set(int ii) { i = ii; }
-  int read() const { return i; }
-  int permute() { return i = i * 47; }
-};
-#endif // USEFUL_H ///:~
-							```
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## Composition Example
-							```
-//: C14:Composition.cpp
-// From Thinking in C++, 2nd Edition
-// Available at http://www.BruceEckel.com
-// (c) Bruce Eckel 2000
-// Copyright notice in Copyright.txt
-// Reuse code with composition
-#include "Useful.h"
-
-class Y {
-  int i;
-public:
-  X x; // Embedded object
-  Y() { i = 0; }
-  void f(int ii) { i = ii; }
-  int g() const { return i; }
-};
-
-int main() {
-  Y y;
-  y.f(47);
-  y.x.set(37); // Access the embedded object
-} ///:~
-							```
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## Inheritance
-							* Inherits members and functions from parent/base class  
-							
-							```
-//: C14:Inheritance.cpp
-// From Thinking in C++, 2nd Edition
-// Available at http://www.BruceEckel.com
-// (c) Bruce Eckel 2000
-// Copyright notice in Copyright.txt
-// Simple inheritance
-#include "Useful.h"
-#include <iostream>
-using namespace std;
-
-class Y : public X {
-  int i; // Different from X's i
-public:
-  Y() { i = 0; }
-  int change() {
-    i = permute(); // Different name call
-    return i;
-  }
-  void set(int ii) {
-    i = ii;
-    X::set(ii); // Same-name function call
-  }
-};
-
-int main() {
-  cout << "sizeof(X) = " << sizeof(X) << endl;
-  cout << "sizeof(Y) = "
-       << sizeof(Y) << endl;
-  Y D;
-  D.change();
-  // X function interface comes through:
-  D.read();
-  D.permute();
-  // Redefined functions hide base versions:
-  D.set(12);
-} ///:~
-							```
-							* Note the keyword public before X. It keeps the public-ness of the members of the base class.
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## Another Syntax for the Constructor
-							```
-//: C14:PseudoConstructor.cpp
-// From Thinking in C++, 2nd Edition
-// Available at http://www.BruceEckel.com
-// (c) Bruce Eckel 2000
-// Copyright notice in Copyright.txt
-class X {
-  int i;
-  float f;
-  char c;
-  char* s;
-public:
-  X() : i(7), f(1.4), c('x'), s("howdy") {}
-};
-
-int main() {
-  X x;
-  int i(100);  // Applied to ordinary definition
-  int* ip = new int(47);
-} ///:~
-							```
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## Order of Constructors & Destructors of Derived Classes
-							```
-//: C14:Order.cpp
-// From Thinking in C++, 2nd Edition
-// Available at http://www.BruceEckel.com
-// (c) Bruce Eckel 2000
-// Copyright notice in Copyright.txt
-// Constructor/destructor order
-#include <fstream>
-using namespace std;
-ofstream out("order.out");
-
-#define CLASS(ID) class ID { \
-public: \
-  ID(int) { out << #ID " constructor\n"; } \
-  ~ID() { out << #ID " destructor\n"; } \
-};
-
-CLASS(Base1);
-CLASS(Member1);
-CLASS(Member2);
-CLASS(Member3);
-CLASS(Member4);
-
-class Derived1 : public Base1 {
-  Member1 m1;
-  Member2 m2;
-public:
-  Derived1(int) : m2(1), m1(2), Base1(3) {
-    out << "Derived1 constructor\n";
-  }
-  ~Derived1() {
-    out << "Derived1 destructor\n";
-  }
-};
-
-class Derived2 : public Derived1 {
-  Member3 m3;
-  Member4 m4;
-public:
-  Derived2() : m3(1), Derived1(2), m4(3) {
-    out << "Derived2 constructor\n";
-  }
-  ~Derived2() {
-    out << "Derived2 destructor\n";
-  }
-};
-
-int main() {
-  Derived2 d2;
-} ///:~
-							```
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## Functions That Don't Automatically Inherit
-							* Constructors
-							* Destructors
-							* Assignment Operator
-						</script>
-					</section>
-					
-					<section data-markdown>
-						<script type="text/template">
-							## Choosing Composition vs. Inheritance
-							* Composition - when you want the features of an existing class inside your new class, but not the interface (functions)
-							* Composition - "has a" relationship
-							* Inheritance - when you want the members and functions of a base clas
-							* Inheritance - "is a" relationship
-						</script>
-					</section>
-				</section>
-				
-				<section>
-					<section data-markdown>
-						## Protected
-					</section>
-					
-					<section data-markdown>
-						## Protected Example
-						* Protected means it is private to everything outside of the class and its derived classes.  
-						
-						```
-//: C14:Protected.cpp
-// From Thinking in C++, 2nd Edition
-// Available at http://www.BruceEckel.com
-// (c) Bruce Eckel 2000
-// Copyright notice in Copyright.txt
-// The protected keyword
-#include <fstream>
 using namespace std;
 
 class Base {
-  int i;
-protected:
-  int read() const { return i; }
-  void set(int ii) { i = ii; }
 public:
-  Base(int ii = 0) : i(ii) {}
-  int value(int m) const { return m*i; }
+  virtual int f() const { 
+    cout << "Base::f()\n"; 
+    return 1; 
+  }
+  virtual void f(string) const {}
+  virtual void g() const {}
 };
 
-class Derived : public Base {
-  int j;
+class Derived1 : public Base {
 public:
-  Derived(int jj = 0) : j(jj) {}
-  void change(int x) { set(x); }
-}; 
+  void g() const {}
+};
+
+class Derived2 : public Base {
+public:
+  // Overriding a virtual function:
+  int f() const { 
+    cout << "Derived2::f()\n"; 
+    return 2;
+  }
+};
+
+class Derived3 : public Base {
+public:
+  // Cannot change return type:
+  //! void f() const{ cout << "Derived3::f()\n";}
+};
+
+class Derived4 : public Base {
+public:
+  // Change argument list:
+  int f(int) const { 
+    cout << "Derived4::f()\n"; 
+    return 4; 
+  }
+};
 
 int main() {
-  Derived d;
-  d.change(10);
+  string s("hello");
+  Derived1 d1;
+  int x = d1.f();
+  d1.f(s);
+  Derived2 d2;
+  x = d2.f();
+//!  d2.f(s); // string version hidden
+  Derived4 d4;
+  x = d4.f(1);
+//!  x = d4.f(); // f() version hidden
+//!  d4.f(s); // string version hidden
+  Base& br = d4; // Upcast
+//!  br.f(1); // Derived version unavailable
+  br.f(); // Base version available
+  br.f(s); // Base version available
 } ///:~
-						```
-					</section>
-				</section>
-					
-
-                <section>
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## GDB
-                        </script>
-                    </section>
-                    
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## What is GDB?
-                            * A debugger for C and C++ (along with Pascal, Objective-C, and Fortran).
-                            * Does 4 main things:
-                                * Start your program, specifying anything that might affect its behavior
-                                * Make your program stop on specified conditions
-                                * Examine what has happened when your program stopped
-                                * Change things in your program so you can experiment with correcting the effects of one bug
-                        </script>
-                    </section>
-                    
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## Sample Segmentation Fault Program
-                            ```
-#include <stdio.h>
-
-int main()
-{
-    int a, b, c;
-    char d, e, f;
-    a = 1;
-    b = 2;
-    d = 'D';
-    e = 'E';
-
-    int *a_ptr, *b_ptr, *c_ptr;
-    char *d_ptr, *e_ptr, *f_ptr;
-
-    a_ptr = &a;
-    b_ptr = a_ptr;
-    c_ptr = b_ptr;
-
-    d_ptr = &d;
-    e_ptr = d_ptr;
-    f_ptr = d_ptr;
-
-    char *ptr = NULL; // Null pointer
-    printf("%c", *ptr);
-
-    return 0;
-}
                             ```
                         </script>
                     </section>
                     
                     <section data-markdown>
                         <script type="text/template">
-                            ## Compiling a Program for Debugging
-                            * <code>g++ -g segfault.cpp</code>
-                                * The -g flag enables built-in debugging support; note that the file size is slightly bigger and it takes more time
-                            * <code>gdb</code>
-                                * Start the gdb interface
-                            * <code>(gdb) help</code>
-                                * get the help menu
+                            ## Constructors & Destructors  
+                            * Constructors can't be virtual, but destructors can  
+                            
+                            ```
+//: C15:VirtualDestructors.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Behavior of virtual vs. non-virtual destructor
+#include <iostream>
+using namespace std;
+
+class Base1 {
+public:
+  ~Base1() { cout << "~Base1()\n"; }
+};
+
+class Derived1 : public Base1 {
+public:
+  ~Derived1() { cout << "~Derived1()\n"; }
+};
+
+class Base2 {
+public:
+  virtual ~Base2() { cout << "~Base2()\n"; }
+};
+
+class Derived2 : public Base2 {
+public:
+  ~Derived2() { cout << "~Derived2()\n"; }
+};
+
+int main() {
+  Base1* bp = new Derived1; // Upcast
+  delete bp;
+  Base2* b2p = new Derived2; // Upcast
+  delete b2p;
+} ///:~
+                            ```
+                            
+                            * Note that you will likely want all destructors to be virtual in the case of memory leaks.
                         </script>
                     </section>
                     
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## Running a Program in GDB
-                            * <code>(gdb) file a.exe</code>
-                                * loads the executable in gdb
-                            * <code>(gdb) run</code>
-                                * runs the executable
-                            * <code>(gdb) continue</code>
-                                * continues the program
-                        </script>
-                    </section>
-                </section>
-                
-                
-                <section>
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## Breakpoints
-                        </script>
-                    </section>
-                    
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## Breakpoints Instructions
-                            * Places in code to tell gdb to stop so you can analyze the code
-                            * <code>(gdb) break segfault.cpp:8</code>
-                                * Note that it stops before an actionable line (initialization/assignment/function call)
-                                * Can also break at a specific function w/ the function name
-                            * <code>(gdb) run</code>
-                        </script>
-                    </section>
-                    
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## Checking Variable Values
-                            * <code>(gdb) step</code>
-                                * steps through the program line by line; enter to repeat
-                            * <code>(gdb) next</code>  
-                                * goes inside a function; more on that later
-                        </script>
-                    </section>
-                    
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## Checking Variable Values
-                            * <code>(gdb) print a</code>  
-                            * <code>(gdb) print a_ptr</code>  
-                            * <code>(gdb) print *a_ptr</code>  
-                            * <code>(gdb) print ptr</code> - NULL Pointer
-                            * <code>(gdb) print *ptr</code> - can't access!
-                        </script>
-                    </section>
                 </section>
                 
                 <section>
                     <section data-markdown>
                         <script type="text/template">
-                            ## Stepping into Functions
+                            ## Basic Templates
                         </script>
                     </section>
                     
                     <section data-markdown>
                         <script type="text/template">
-                            ## Stepping into Functions Sample  
-                            ```
-#include <stdio.h>
-
-void sample_function()
-{
-    int a, b, c;
-    a = 101;
-    b = 102;
-    char d, e, f;
-    d = 'd';
-    e = 'e';
-    
-    return;
-}
-
-int main()
-{
-    sample_function();
-    
-    int a, b, c;
-    char d, e, f;
-    a = 1;
-    b = 2;
-    d = 'D';
-    e = 'E';
-
-    int *a_ptr, *b_ptr, *c_ptr;
-    char *d_ptr, *e_ptr, *f_ptr;
-
-    a_ptr = &a;
-    b_ptr = a_ptr;
-    c_ptr = b_ptr;
-
-    d_ptr = &d;
-    e_ptr = d_ptr;
-    f_ptr = d_ptr;
-
-    char *ptr = NULL; // Null pointer
-    printf("%c", *ptr);
-
-    return 0;
-}
-
-                            ```
+                            ## What are templates?
+                            * Rather than reusing object code (like inheritance and composition), templates reuse source code.
+                            * Allows a container to hold an unspecified parameter (e.g. container of ints or a container of strings)
+                            * This parameter is substitued by the compile (similar to macros w/ #define), but it's cleaner to use.
                         </script>
                     </section>
                     
                     <section data-markdown>
                         <script type="text/template">
-                            ## Stepping into a Function  
-                            * <code>(gdb) break segfault_func.cpp:17</code>
-                            * <code>(gdb) step</code>
-                                * Note that this time, we actually entered the function
-                                * Also note that the variables are in the scope of the function, not main
+                            ## Template Example
+                            ```
+//: C16:Array.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+#include "require.h"
+#include <iostream>
+using namespace std;
+
+template<class T>
+class Array {
+  enum { size = 100 };
+  T A[size];
+public:
+  T& operator[](int index) {
+    require(index >= 0 && index < size,
+      "Index out of range");
+    return A[index];
+  }
+};
+
+int main() {
+  Array<int> ia;
+  Array<float> fa;
+  for(int i = 0; i < 20; i++) {
+    ia[i] = i * i;
+    fa[i] = float(i) * 1.414;
+  }
+  for(int j = 0; j < 20; j++)
+    cout << j << ": " << ia[j]
+         << ", " << fa[j] << endl;
+} ///:~
+                            ```
+                            * All data structures & algorithms that we will be using in the following classes are templates!!
                         </script>
                     </section>
+                    
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Template Example
+                            ```
+//: C16:Array3.cpp
+// From Thinking in C++, 2nd Edition
+// Available at http://www.BruceEckel.com
+// (c) Bruce Eckel 2000
+// Copyright notice in Copyright.txt
+// Built-in types as template arguments
+#include "require.h"
+#include <iostream>
+using namespace std;
+
+template<class T, int size = 100>
+class Array {
+  T array[size];
+public:
+  T& operator[](int index) {
+    require(index >= 0 && index < size,
+      "Index out of range");
+    return array[index];
+  }
+  int length() const { return size; }
+};
+
+class Number {
+  float f;
+public:
+  Number(float ff = 0.0f) : f(ff) {}
+  Number& operator=(const Number& n) {
+    f = n.f;
+    return *this;
+  }
+  operator float() const { return f; }
+  friend ostream&
+    operator<<(ostream& os, const Number& x) {
+      return os << x.f;
+  }
+};
+
+template<class T, int size = 20>
+class Holder {
+  Array<T, size>* np;
+public:
+  Holder() : np(0) {}
+  T& operator[](int i) {
+    require(0 <= i && i < size);
+    if(!np) np = new Array<T, size>;
+    return np->operator[](i);
+  }
+  int length() const { return size; }
+  ~Holder() { delete np; }
+};
+
+int main() {
+  Holder<Number> h;
+  for(int i = 0; i < 20; i++)
+    h[i] = i;
+  for(int j = 0; j < 20; j++)
+    cout << h[j] << endl;
+} ///:~
+                            ```
+                        </script>
+                    </section>
+                    
                 </section>
-                
-                <section>
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## Watching Variables
-                        </script>
-                    </section>
-                    
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## Modified Program
-                            ```
-#include <stdio.h>
 
-void sample_function()
-{
-    int a, b, c;
-    a = 101;
-    b = 102;
-    char d, e, f;
-    d = 'd';
-    e = 'e';
-    
-    return;
-}
-
-int main()
-{
-    sample_function();
-    
-    int a, b, c;
-    char d, e, f;
-    a = 1;
-    b = 2;
-    d = 'D';
-    e = 'E';
-    a = 11;
-    a = 111;
-
-    int *a_ptr, *b_ptr, *c_ptr;
-    char *d_ptr, *e_ptr, *f_ptr;
-
-    a_ptr = &a;
-    b_ptr = a_ptr;
-    c_ptr = b_ptr;
-
-    d_ptr = &d;
-    e_ptr = d_ptr;
-    f_ptr = d_ptr;
-
-    char *ptr = NULL; // Null pointer
-    printf("%c", *ptr);
-
-    return 0;
-}
-                            ```
-                        </script>
-                    </section>
-                    
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## GDB Watch  
-                            * <code>gdb</code>
-                            * <code>(gdb) file a.exe</code>
-                            * <code>(gdb) break segfault_watch.cpp:17</code>
-                            * <code>(gdb) run</code>
-                            * <code>(gdb) watch a</code> - whenever a changes, it will print the old and new values and stop before the next line
-                            * <code>(gdb) next</code>
-                        </script>
-                    </section>
+                <section data-markdown>
+                    <script type="text/template">
+                        ## Homework
+                        * HW #12 - TBD - due 12/08/18 @ 11:59PM
+                        * 
+                    </script>
                 </section>
-                
-                <section>
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## Other Features
-                        </script>
-                    </section>
-                    
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## Other GDB Commands
-                            * <code>breaktrace</code> - stack trace leading to a seg fault
-                            * <code>where</code> - same as backtrace, but in middle of program (e.g. in a function or in main)
-                            * <code>finish</code> - runs until current function finishes
-                            * <code>info breakpoints</code> - shows all declared breakpoints
-                            * <code>clear file:linenum</code> - deletes breakpoint
-                            * <code>delete</code> - deletes all breakpoints
-                        </script>
-                    </section>
-                    
-                    <section data-markdown>
-                        <script type="text/template">
-                            ## Conditional Breakpoints  
-                            * <code>(gdb) break segfault_watch.cpp:27 if a >=100</code>
-                                * stops at line 27 if the variable a is greater than 100
-                        </script>
-                    </section>
-                </section>
-					
-				<section>
-					<section data-markdown>
-						<textarea data-template>
-						## Homework
-						* Reading: Thinking in C++ Ch 14
-						* <a href="https://classroom.github.com/g/qXFZI1NK">
-						https://classroom.github.com/g/qXFZI1NK
-						</a>
-						</textarea>
-					</section>
-				</section>
-				
-			</div>
-		</div>
+            </div>
+        </div>
 
-		<script src="lib/js/head.min.js"></script>
-		<script src="js/reveal.js"></script>
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.js"></script>
 
-		<script>
-			// More info about config & dependencies:
-			// - https://github.com/hakimel/reveal.js#configuration
-			// - https://github.com/hakimel/reveal.js#dependencies
-			Reveal.initialize({
-				dependencies: [
-					{ src: 'plugin/markdown/marked.js' },
-					{ src: 'plugin/markdown/markdown.js' },
-					{ src: 'plugin/notes/notes.js', async: true },
-					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
-				]
-			});
-		</script>
-	</body>
+        <script>
+            // More info about config & dependencies:
+            // - https://github.com/hakimel/reveal.js#configuration
+            // - https://github.com/hakimel/reveal.js#dependencies
+            Reveal.initialize({
+                dependencies: [
+                    { src: 'plugin/markdown/marked.js' },
+                    { src: 'plugin/markdown/markdown.js' },
+                    { src: 'plugin/notes/notes.js', async: true },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+                ]
+            });
+        </script>
+    </body>
 </html>
